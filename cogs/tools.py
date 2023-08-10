@@ -6,7 +6,7 @@ from tools.publish import ToolManager
 
 with open("tools.json") as f:
     tools = json.load(f)
-managers = {k: ToolManager(**v) for k, v in tools.items()}
+managers = {k: ToolManager(k,**v) for k, v in tools.items()}
 
 
 class Tools(Cog_Extension):
@@ -35,6 +35,7 @@ class Tools(Cog_Extension):
                 obj.start()
                 await ctx.send(f"starting tool id {id!r}")
                 obj.publisher.wait_completed()
+                obj.wait_completed()
                 await ctx.send(f'URL: {obj.geturl()}\nShortURL: {obj.getshorturl()}')
 
     @commands.command()
@@ -61,7 +62,8 @@ class Tools(Cog_Extension):
                 await ctx.send(f"tool id {id!r} already stopped")
             else:
                 obj.restart()
-                await ctx.send(f"restarting tool id {id!r}")
+                obj.wait_completed()
+                await ctx.send(f"restarted tool id {id!r}")
 
     @tasks.loop(seconds=1)
     async def checking(self):

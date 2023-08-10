@@ -132,6 +132,8 @@ It may look like this:
 
 ## Tool Usage
 
+Double click on the "run.bat" will start this program.
+
 Following commands is in discord
 
 + !start {name}     --start web tool
