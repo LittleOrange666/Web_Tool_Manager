@@ -83,25 +83,24 @@ class ToolManager:
         self.tunnel_name = tunnel_name
         self.static_link = static_link
         self.name = name
+        self.t = threading.Thread(target=self.output_reader)
+        self.t.start()
         if auto_start:
             self.start()
 
     def output_reader(self):
         while True:
-            for line in iter(self.process.stdout.readline, b''):
-                line_str = line.decode("big5")
-                if self.wait_ok:
-                    if f"127.0.0.1:{self.port}" in line_str:
-                        self.wait_ok = False
-                print(self.name + "> " + line_str, end="")
+            if self.process and self.process.stdout and self.process.stdout.readline:
+                for line in iter(self.process.stdout.readline, b''):
+                    line_str = line.decode("big5")
+                    if self.wait_ok:
+                        if f"127.0.0.1:{self.port}" in line_str:
+                            self.wait_ok = False
+                    print(self.name + "> " + line_str, end="")
             time.sleep(0.3)
 
     def _start(self):
-        self.process = subprocess.Popen(self.cmd,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.STDOUT)
-        self.t = threading.Thread(target=self.output_reader)
-        self.t.start()
+        self.process = subprocess.Popen(self.cmd)
 
     def wait_completed(self, delay=0.3):
         while self.wait_ok:
