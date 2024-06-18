@@ -22,6 +22,11 @@ class Commands(Cog_Extension):
         """get gpu temperature"""
         await ctx.send(f"{pynvml.nvmlDeviceGetTemperature(handle, 0)}°C")
 
+    @commands.command()
+    async def say(self, ctx, *text):
+        """get gpu temperature"""
+        await ctx.send(" ".join(text))
+
 
 async def setup(bot):
     await bot.add_cog(Commands(bot))

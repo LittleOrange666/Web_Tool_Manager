@@ -62,8 +62,20 @@ class Tools(Cog_Extension):
                 await ctx.send(f"tool id {id!r} already stopped")
             else:
                 obj.restart()
-                obj.publisher.wait_completed()
                 await ctx.send(f"restarted tool id {id!r}")
+
+    @commands.command()
+    async def relink(self, ctx, id: str):
+        """restart tool"""
+        if id not in managers:
+            await ctx.send(f"unknown tool id {id!r}")
+        else:
+            obj = managers[id]
+            if not obj.isrunning():
+                await ctx.send(f"tool id {id!r} already stopped")
+            else:
+                obj.publisher.restart()
+                await ctx.send(f"relinked tool id {id!r}")
 
     @tasks.loop(seconds=1)
     async def checking(self):

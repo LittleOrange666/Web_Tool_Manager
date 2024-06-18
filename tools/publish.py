@@ -4,6 +4,7 @@ import time
 import threading
 import pyshorteners
 from pyshorteners.exceptions import ShorteningErrorException
+import requests
 
 
 def output_reader(proc, outq):
@@ -13,22 +14,33 @@ def output_reader(proc, outq):
 
 class Publisher:
     def __init__(self, link, tunnel_name, static_link):
-        print("Publisher=>" + link)
-        cmd = "cloudflared tunnel --url " + link
-        if tunnel_name is not None:
-            cmd += " --name " + tunnel_name
+        self.link = link
+        self.tunnel_name = tunnel_name
+        self.static_link = static_link
+        self.alive = True
+        self.dt = threading.Thread(target=self.detector)
+        self.dt.start()
+        self.start()
+
+    def start(self):
+        print("Publisher=>" + self.link)
+        cmd = "cloudflared tunnel --protocol http2 --http2-origin --url " + self.link
+        if self.tunnel_name is not None:
+            cmd += " --name " + self.tunnel_name
+        print(cmd)
         self.proc = subprocess.Popen(cmd,
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.STDOUT)
         self.outq = queue.Queue()
-        if static_link is None:
+        if self.static_link is None:
             self.t = threading.Thread(target=output_reader, args=(self.proc, self.outq))
             self.t.start()
             self._url = ""
             self._completed = False
             self.sus = 0
         else:
-            self._url = static_link
+            self.t = None
+            self._url = self.static_link
             self._completed = True
             self.sus = 0
 
@@ -60,9 +72,28 @@ class Publisher:
             self.check()
             time.sleep(delay)
 
+    def full_close(self):
+        self.alive = False
+        self.close()
+        self.dt.join()
+
     def close(self):
         self.proc.terminate()
-        self.t.join()
+        if self.t:
+            self.t.join()
+    
+    def restart(self):
+        self.close()
+        self.start()
+     
+    def detector(self):
+        while self.alive:
+            time.sleep(300)
+            url = self.geturl()
+            status = requests.get(url).status_code
+            print(f"detect {url}, got {status}")
+            if status not in (200,404):
+                self.restart()
 
 
 class ToolManager:
@@ -115,7 +146,7 @@ class ToolManager:
 
     def stop(self):
         if self.running:
-            self.publisher.close()
+            self.publisher.full_close()
             self.process.terminate()
             self.url = None
             self.shorturl = None
