@@ -1,10 +1,14 @@
+import os.path
 import queue
 import subprocess
 import time
 import threading
+import traceback
+
 import pyshorteners
 from pyshorteners.exceptions import ShorteningErrorException
 import requests
+import platform
 
 
 def output_reader(proc, outq):
@@ -14,6 +18,12 @@ def output_reader(proc, outq):
 
 class Publisher:
     def __init__(self, link, tunnel_name, static_link):
+        self.sus = None
+        self._completed = None
+        self._url = None
+        self.t = None
+        self.outq = None
+        self.proc = None
         self.link = link
         self.tunnel_name = tunnel_name
         self.static_link = static_link
@@ -27,6 +37,9 @@ class Publisher:
         cmd = "cloudflared tunnel --protocol http2 --http2-origin --url " + self.link
         if self.tunnel_name is not None:
             cmd += " --name " + self.tunnel_name
+        exec_name = "cloudflared" + (".exe" if platform.system() == "Windows" else "")
+        if os.path.exists(exec_name):
+            cmd = "./" + cmd
         print(cmd)
         self.proc = subprocess.Popen(cmd,
                                      stdout=subprocess.PIPE,
@@ -90,9 +103,14 @@ class Publisher:
         while self.alive:
             time.sleep(300)
             url = self.geturl()
-            status = requests.get(url).status_code
-            print(f"detect {url}, got {status}")
-            if status not in (200,404):
+            try:
+                status = requests.get(url).status_code
+                print(f"detect {url}, got {status}")
+                if status not in (200, 404):
+                    self.restart()
+            except requests.exceptions.RequestException as e:
+                traceback.print_exception(e)
+                print(f"detect {url}, got Exception: {e!r}")
                 self.restart()
 
 
@@ -177,5 +195,5 @@ class ToolManager:
                 try:
                     self.shorturl = pyshorteners.Shortener().isgd.short(url)
                 except ShorteningErrorException as e:
-                    print("ShorteningErrorException: " + e)
+                    print("ShorteningErrorException: " + str(e))
         return self.shorturl

@@ -6,7 +6,7 @@ from tools.publish import ToolManager
 
 with open("tools.json") as f:
     tools = json.load(f)
-managers = {k: ToolManager(k,**v) for k, v in tools.items()}
+managers = {k: ToolManager(k, **v) for k, v in tools.items()}
 
 
 class Tools(Cog_Extension):
@@ -14,68 +14,68 @@ class Tools(Cog_Extension):
     async def stat(self, ctx):
         """get tools status"""
         print("getting tools status")
-        l = ["id\tstat\turl\tshorturl"]
+        out_lines = ["id\tstat\turl\tshorturl"]
         for k, v in managers.items():
             print("get tools status for " + k)
-            l.append(f'{k}\t{"Running" if v.isrunning() else "Stopped"}\t{v.geturl()}\t{v.getshorturl()}')
-        print(l)
+            out_lines.append(f'{k}\t{"Running" if v.isrunning() else "Stopped"}\t{v.geturl()}\t{v.getshorturl()}')
+        print(out_lines)
         print("complete getting tools status")
-        await ctx.send("\n".join(l))
+        await ctx.send("\n".join(out_lines))
 
     @commands.command()
-    async def start(self, ctx, id: str):
+    async def start(self, ctx, tid: str):
         """start tool"""
-        if id not in managers:
-            await ctx.send(f"unknown tool id {id!r}")
+        if tid not in managers:
+            await ctx.send(f"unknown tool id {tid!r}")
         else:
-            obj = managers[id]
+            obj = managers[tid]
             if obj.isrunning():
-                await ctx.send(f"tool id {id!r} already started")
+                await ctx.send(f"tool id {tid!r} already started")
             else:
                 obj.start()
-                await ctx.send(f"starting tool id {id!r}")
+                await ctx.send(f"starting tool id {tid!r}")
                 obj.publisher.wait_completed()
                 # obj.wait_completed()
                 await ctx.send(f'URL: {obj.geturl()}\nShortURL: {obj.getshorturl()}')
 
     @commands.command()
-    async def stop(self, ctx, id: str):
+    async def stop(self, ctx, tid: str):
         """stop tool"""
-        if id not in managers:
-            await ctx.send(f"unknown tool id {id!r}")
+        if tid not in managers:
+            await ctx.send(f"unknown tool id {tid!r}")
         else:
-            obj = managers[id]
+            obj = managers[tid]
             if not obj.isrunning():
-                await ctx.send(f"tool id {id!r} already stopped")
+                await ctx.send(f"tool id {tid!r} already stopped")
             else:
                 obj.stop()
-                await ctx.send(f"stopping tool id {id!r}")
+                await ctx.send(f"stopping tool id {tid!r}")
 
     @commands.command()
-    async def restart(self, ctx, id: str):
+    async def restart(self, ctx, tid: str):
         """restart tool"""
-        if id not in managers:
-            await ctx.send(f"unknown tool id {id!r}")
+        if tid not in managers:
+            await ctx.send(f"unknown tool id {tid!r}")
         else:
-            obj = managers[id]
+            obj = managers[tid]
             if not obj.isrunning():
-                await ctx.send(f"tool id {id!r} already stopped")
+                await ctx.send(f"tool id {tid!r} already stopped")
             else:
                 obj.restart()
-                await ctx.send(f"restarted tool id {id!r}")
+                await ctx.send(f"restarted tool id {tid!r}")
 
     @commands.command()
-    async def relink(self, ctx, id: str):
+    async def relink(self, ctx, tid: str):
         """restart tool"""
-        if id not in managers:
-            await ctx.send(f"unknown tool id {id!r}")
+        if tid not in managers:
+            await ctx.send(f"unknown tool id {tid!r}")
         else:
-            obj = managers[id]
+            obj = managers[tid]
             if not obj.isrunning():
-                await ctx.send(f"tool id {id!r} already stopped")
+                await ctx.send(f"tool id {tid!r} already stopped")
             else:
                 obj.publisher.restart()
-                await ctx.send(f"relinked tool id {id!r}")
+                await ctx.send(f"relinked tool id {tid!r}")
 
     @tasks.loop(seconds=1)
     async def checking(self):
@@ -86,8 +86,8 @@ class Tools(Cog_Extension):
                     print(f"tool {k!r} started, shorturl: {v.shorturl}")
                     await self.bot.get_channel(688019708808658957).send(f"tool {k!r} started, shorturl: {v.shorturl}")
             l = []
-            for k, v in managers.items():
-                l.append(f'{k}\t{"Running" if v.isrunning() else "Stopped"}\t{v.geturl()}\t{v.getshorturl()}')
+            for k0, v0 in managers.items():
+                l.append(f'{k0}\t{"Running" if v0.isrunning() else "Stopped"}\t{v0.geturl()}\t{v0.getshorturl()}')
             print(l)
 
     @checking.before_loop
