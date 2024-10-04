@@ -1,3 +1,4 @@
 token.json
 tools.json
 *.pyc
+.idea/*

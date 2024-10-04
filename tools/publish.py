@@ -41,7 +41,7 @@ class Publisher:
         if os.path.exists(exec_name):
             cmd = "./" + cmd
         print(cmd)
-        self.proc = subprocess.Popen(cmd,
+        self.proc = subprocess.Popen(cmd, shell=True,
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.STDOUT)
         self.outq = queue.Queue()
@@ -101,7 +101,10 @@ class Publisher:
      
     def detector(self):
         while self.alive:
-            time.sleep(300)
+            for i in range(300):
+                if not self.alive:
+                    return
+                time.sleep(1)
             url = self.geturl()
             try:
                 status = requests.get(url).status_code
@@ -149,7 +152,7 @@ class ToolManager:
             time.sleep(0.3)
 
     def _start(self):
-        self.process = subprocess.Popen(self.cmd)
+        self.process = subprocess.Popen(self.cmd, shell=True)
 
     def wait_completed(self, delay=0.3):
         while self.wait_ok:
